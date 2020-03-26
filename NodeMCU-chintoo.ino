@@ -16,6 +16,10 @@ DHT dht(DHTPIN, DHTTYPE);
 #define DIGITALNOISESENSORPIN   13
 #define ANALOGNOISESENSORPIN    36
 
+/* DHT 11*/
+float humidity = 0.0;
+float temperature = 0.0;
+
 /* SH5461AS (Choosing: DIGIT=LOW SEGMENT=HIGH) */
 int a = 14;
 int b = 33;
@@ -470,22 +474,25 @@ void setup() {
 
 void loop() {
     /* DHT11 */
-    float h = dht.readHumidity();
-    float t = dht.readTemperature();
+    if (secondCount % 4 == 0)
+    {
+        humidity = dht.readHumidity();
+        temperature = dht.readTemperature();
+    }
   
-    if (isnan(h) || isnan(t))
+    if (isnan(humidity) || isnan(temperature))
     {
         Serial.println(F("Failed to read from DHT sensor!"));
         return;
     }
 
 #if 0
-    float hic = dht.computeHeatIndex(t, h, false); /* More precise */
+    float hic = dht.computeHeatIndex(temperature, humidity, false); /* More precise */
     Serial.print(F("Humidity: "));
-    Serial.print(h);
+    Serial.print(humidity);
     Serial.println(F("%"));
     Serial.print(F("Temperature: "));
-    Serial.print(t);
+    Serial.print(temperature);
     Serial.print(F("°C "));
   
     Serial.print(hic);
@@ -521,32 +528,32 @@ void loop() {
   
     if (wake == 1)
     {
-        if (h < 20)
+        if (humidity < 20)
         {
             LEDred();
             SEGamazed();
         }
-        if (h >= 20 && h < 40)
+        if (humidity >= 20 && humidity < 40)
         {
             LEDmagenta();
             SEGamazed();
         }
-        if (h >= 40 && h < 60)
+        if (humidity >= 40 && humidity < 60)
         {
             LEDyellow();
             SEGamazed();
         }
-        if (h >= 60 && h < 80)
+        if (humidity >= 60 && humidity < 80)
         {
             LEDgreen();
             SEGamazed();
         }
-        if (h >= 80 && h < 90)
+        if (humidity >= 80 && humidity < 90)
         {
             LEDcyan();
             SEGamazed();
         }
-        if (h >= 90)
+        if (humidity >= 90)
         {
             LEDblue();
             SEGamazed();
@@ -554,11 +561,11 @@ void loop() {
     }
     else if (showTemp == 1)
     {
-        SEGnumber(t);
+        SEGnumber(temperature);
     }
     else if (showHum == 1)
     {
-        SEGnumber(h);
+        SEGnumber(humidity);
     }
     else
     {

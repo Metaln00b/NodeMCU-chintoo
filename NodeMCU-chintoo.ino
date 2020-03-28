@@ -1,51 +1,18 @@
-/* DHT 11 */
-#include <DHT.h>
+#include "chintoo.h"
 
-#define DHTPIN                  15
-#define DHTTYPE                 DHT11
-
-DHT dht(DHTPIN, DHTTYPE);
-
-/* RGB-LED (Common-Anode)*/
-#define REDLEDPIN               21
-#define GREENLEDPIN             22
-#define BLUELEDPIN              23
-
-/* Noise Sensor */
-#define NOISESENSORLEDPIN       2
-#define DIGITALNOISESENSORPIN   13
-#define ANALOGNOISESENSORPIN    36
-
-/* DHT 11*/
 float humidity = 0.0;
 float temperature = 0.0;
 
-/* SH5461AS (Choosing: DIGIT=LOW SEGMENT=HIGH) */
-int a = 14;
-int b = 33;
-int c = 5;
-int d = 16;
-int e = 4;
-int f = 27;
-int g = 18;
-int d1 = 12;
-int d2 = 26;
-int d3 = 25;
-int d4 = 19;
-int p = 17;
-int SEGfreq = 2;
-int winkFreq = 70;
-int winkDuration = 30;
-
 /* Counter */
-unsigned long secondCount;
-unsigned long lastSecondChangeTime;
+unsigned long count_s;
+unsigned long last_ms;
 
 /* Modes */
 boolean wake = 0;
 boolean showTemp = 0;
 boolean showHum = 0;
 
+/* RGB-LED */
 void LEDred()
 {
     digitalWrite(REDLEDPIN, LOW);
@@ -102,6 +69,7 @@ void LEDoff()
     digitalWrite(BLUELEDPIN, HIGH);
 }
 
+/* Segment Display */
 void SEGdigitClear()
 {
     digitalWrite(d1, HIGH);
@@ -254,7 +222,7 @@ void SEGH()
     digitalWrite(g, HIGH);
 }
 
-void pickDigit(unsigned int digit)
+void SEGselectDigit(unsigned int digit)
 {
     switch(digit)
     {
@@ -285,7 +253,7 @@ void pickDigit(unsigned int digit)
     }
 }
  
-void pickNumber(unsigned int number)
+void SEGselectNumber(unsigned int number)
 {
     switch(number)
     {
@@ -322,10 +290,10 @@ void pickNumber(unsigned int number)
     }
 }
 
-void SEGnumber(unsigned int number)
+void SEGdisplay(unsigned int number)
 {
     SEGclear();
-    pickDigit(1);
+    SEGselectDigit(1);
     if ((showTemp == 1 || showHum == 1) && number < 1000)
     {
         if (showTemp == 1)
@@ -340,30 +308,30 @@ void SEGnumber(unsigned int number)
     }
     if (number >= 1000)
     {
-        pickNumber(number/1000);
+        SEGselectNumber(number/1000);
     }
-    delay(SEGfreq);
+    delay(SEGfreq_ms);
   
     SEGclear();
-    pickDigit(2);
+    SEGselectDigit(2);
     if (number >= 100)
     {
-        pickNumber((number%1000)/100);
+        SEGselectNumber((number%1000)/100);
     }
-    delay(SEGfreq);
+    delay(SEGfreq_ms);
 
     SEGclear();
-    pickDigit(3);
+    SEGselectDigit(3);
     if (number >= 10)
     {
-        pickNumber((number%100)/10);
+        SEGselectNumber((number%100)/10);
     }
-    delay(SEGfreq);
+    delay(SEGfreq_ms);
 
     SEGclear();
-    pickDigit(4);
-    pickNumber(number%10);
-    delay(SEGfreq);
+    SEGselectDigit(4);
+    SEGselectNumber(number%10);
+    delay(SEGfreq_ms);
 }
 
 void SEGamazed()
@@ -474,7 +442,7 @@ void setup() {
 
 void loop() {
     /* DHT11 */
-    if (secondCount % 4 == 0)
+    if (count_s % 4 == 0)
     {
         humidity = dht.readHumidity();
         temperature = dht.readTemperature();
@@ -486,74 +454,61 @@ void loop() {
         return;
     }
 
-#if 0
-    float hic = dht.computeHeatIndex(temperature, humidity, false); /* More precise */
-    Serial.print(F("Humidity: "));
-    Serial.print(humidity);
-    Serial.println(F("%"));
-    Serial.print(F("Temperature: "));
-    Serial.print(temperature);
-    Serial.print(F("°C "));
-  
-    Serial.print(hic);
-    Serial.println(F("°C"));
-#endif
-
     /* Noise Sensor */
     if (digitalRead(DIGITALNOISESENSORPIN) == HIGH)
     {
         digitalWrite(NOISESENSORLEDPIN, HIGH);
         wake = 1;
-        secondCount = 1;
+        count_s = 1;
     }
 
-    if (wake == 1 && secondCount == winkDuration)
+    if (wake == 1 && count_s == winkDuration_s)
     {
         wake = 0;
         showTemp = 1;
     }
 
-    if (showTemp == 1 && secondCount == (winkDuration+5))
+    if (showTemp == 1 && count_s == (winkDuration_s+5))
     {
         showTemp = 0;
         showHum = 1;
     }
 
-    if (showHum == 1 && secondCount == (winkDuration+10))
+    if (showHum == 1 && count_s == (winkDuration_s+10))
     {
         digitalWrite(NOISESENSORLEDPIN, LOW);
         showHum = 0;
-        secondCount = 1;
+        count_s = 1;
     }
   
     if (wake == 1)
     {
-        if (humidity < 20)
+        if (humidity <= 20)
         {
             LEDred();
             SEGamazed();
         }
-        if (humidity >= 20 && humidity < 40)
+        if (humidity >= 21 && humidity <= 30)
         {
             LEDmagenta();
             SEGamazed();
         }
-        if (humidity >= 40 && humidity < 60)
+        if (humidity >= 31 && humidity <= 40)
         {
             LEDyellow();
             SEGamazed();
         }
-        if (humidity >= 60 && humidity < 80)
+        if (humidity >= 41 && humidity <= 60)
         {
             LEDgreen();
             SEGamazed();
         }
-        if (humidity >= 80 && humidity < 90)
+        if (humidity >= 61 && humidity <= 80)
         {
             LEDcyan();
             SEGamazed();
         }
-        if (humidity >= 90)
+        if (humidity >= 81)
         {
             LEDblue();
             SEGamazed();
@@ -561,11 +516,11 @@ void loop() {
     }
     else if (showTemp == 1)
     {
-        SEGnumber(temperature);
+        SEGdisplay(temperature);
     }
     else if (showHum == 1)
     {
-        SEGnumber(humidity);
+        SEGdisplay(humidity);
     }
     else
     {
@@ -573,15 +528,15 @@ void loop() {
         SEGsleep();  
     }
   
-    if (millis() - lastSecondChangeTime > 1000)
+    if (millis() - last_ms > 1000)
     {
-        secondCount++;
-        lastSecondChangeTime = millis();
+        count_s++;
+        last_ms = millis();
 
-        if (wake == 1 && (secondCount % 2 == 0) )
+        if (wake == 1 && (count_s % 2 == 0) )
         {
             SEGwink();
-            delay(winkFreq);
+            delay(winkFreq_ms);
         }
     }
 }

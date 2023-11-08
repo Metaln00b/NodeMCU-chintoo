@@ -6,4 +6,4 @@ ESP32S based emotional temperature and humidity robot sculpture
 - SH5461AS Common Cathode
 
 ## Many thanks to
-- [mohitbhoite](https://github.com/mohitbhoite)https://github.com/mohitbhoite
+- [mohitbhoite](https://github.com/mohitbhoite)
